@@ -19,7 +19,7 @@
 
 This write-up attempts to explain the implementation, and the taught process behind in this repo. Given the personal time constraints, there were some missing points, referenced at the end of the write-up.
 
-#### Model Evaluation
+### Model Evaluation
 
 Model evaluation and persistance done under `research/` directory. Here's the directory structure for the important files:
 
@@ -34,7 +34,7 @@ Model evaluation and persistance done under `research/` directory. Here's the di
 
 Since the model is a classification model, micro-, macro- and weighted-average of `precision`, `recall`, and `f1-score` metrics calculated on test data and stored in `evaluation.json`.
 
-#### Model Persistance
+### Model Persistance
 
 `Model` class omitted and rewritten as a composite [sklearn.Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) object. Usually, it's a good practice chaining sklearn estimators and transformers for easier maintainability. This object converted into a ONNX format and persisted to disk as such using [skl2onnx](https://github.com/onnx/sklearn-onnx).
 
@@ -48,7 +48,7 @@ ONNX models are also **optimized for performance**, they can run faster and cons
 
 Trade-off is sometimes it might take a day or two to write a converter for custom model objects, but the effort would be worth it, considering the eliminated problems.
 
-#### Inference Service
+### Inference Service
 
 The service is implemented based on provided OpenAPI specification in FastAPI, which provides built-in support for **asynchronous request handling** ensures that the server can handle multiple requests concurrently without blocking other calls.
 
@@ -78,7 +78,7 @@ The advantage of doing this as an event is that **our service won't start until 
 
 One tradeoff is lifespan events currently only supported by `FastAPI` but not `APIRouter`.
 
-#### Deployment
+### Deployment
 
 `Makefile` targets hold the required commands for deployment and to examine the service.
 
@@ -119,7 +119,7 @@ However, the container will be ran in Kubernetes (K8s). **Since, K8s handle repl
 
 And since the container will be run in K8s behind a TLS Termination Proxy (load balancer) like Nginx, `--proxy-headers` option added to `Dockerfile` to tell Uvicorn **to trust the headers sent by that proxy** telling it that the application is running behind HTTPS, etc.
 
-#### Tests
+### Tests
 
 Added basic performance test report and unit tests. They are basic given the time constraint.
 
@@ -138,7 +138,7 @@ coverage run --omit="tests/*" -m pytest tests --disable-pytest-warnings
 coverage report -m
 ```
 
-#### Missing components
+### Missing components
 
 Some of the things I would do if I had more time:
 
@@ -151,7 +151,7 @@ Some of the things I would do if I had more time:
 - **Kubernetes testing**: a basic gateway and a list of manifests (i.e. `configmap.yaml`, `deployment.yaml`, `service.yaml` `ingress.yaml`) on my local minikube / or development cluster.
 - **Extensive Unit & Performance tests**: The most important test in the suite needs a quick fixing, but left due to time-constraint.  
 - **Code Profiling**: using `pyinstrument` and `FastAPI.middleware` decorator to register a profiling middleware to our service. A good write-up on the topic [here](https://blog.balthazar-rouberol.com/how-to-profile-a-fastapi-asynchronous-request).
-- **Metrics API**: assuming only for applications API metrics (i.e. Request Per Minute, Average and Max Latency, Errors per Minute), but these can also be considered 
+- **Metrics API**: assuming only for applications API metrics (i.e. Request Per Minute, Average and Max Latency, Errors per Minute), but some of these can also be considered 
   - Infrastructure API Metrics: (i.e. uptime, CPU util, memory util)
   - API Product metrics: (i.e. usage growth, unique API consumers, top customers by API usage, API retention, TTFHW, API calls per business transaction) can also be considered.
-  - A good starting point can be [PyTorch Metrics API](https://pytorch.org/serve/metrics_api.html).
+  - A good starting point: [PyTorch Metrics API](https://pytorch.org/serve/metrics_api.html).
