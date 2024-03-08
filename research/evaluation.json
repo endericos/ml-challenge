@@ -1,0 +1,17 @@
+{
+    "micro": {
+        "precision": 0.87,
+        "recall": 0.87,
+        "f1-score": 0.87
+    },
+    "macro": {
+        "precision": 0.906,
+        "recall": 0.861,
+        "f1-score": 0.866
+    },
+    "weighted": {
+        "precision": 0.903,
+        "recall": 0.87,
+        "f1-score": 0.871
+    }
+}
