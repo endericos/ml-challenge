@@ -36,11 +36,11 @@ Since the model is a classification model, micro-, macro- and weighted-average o
 
 #### Model Persistance
 
-`Model` class omitted and rewritten as a composite [sklearn.Pipeline]("https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html") object. Usually, it's a good practice chaining sklearn estimators and transformers for easier maintainability. This object converted into a ONNX format and persisted to disk as such using [skl2onnx]("https://github.com/onnx/sklearn-onnx").
+`Model` class omitted and rewritten as a composite [sklearn.Pipeline](https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.Pipeline.html) object. Usually, it's a good practice chaining sklearn estimators and transformers for easier maintainability. This object converted into a ONNX format and persisted to disk as such using [skl2onnx](https://github.com/onnx/sklearn-onnx).
 
 Joblib is not chosen, since serialising the model as python object makes it strongly coupled to the Python training environment. In this case, an inference service, would still require the training framework (i.e. sklearn, pytorch).
 
-Instead, we can only maintain [onnxruntime]("https://github.com/microsoft/onnxruntime") package in our inference environment. The only packages needed for the service `fastapi[all], onnxruntime`.
+Instead, we can only maintain [onnxruntime](https://github.com/microsoft/onnxruntime) package in our inference environment. The only packages needed for the service `fastapi[all], onnxruntime`.
 
 My reasoning was ONNX models are **portable to many different languages (i.e. C++, go)** and **different computing architectures (i.e. mobile, edge, cloud)**. They can provide greater flexibility in different customer environments.
 
@@ -70,9 +70,9 @@ The `prediction/` endpoint is defined as an asynchronous function `async def pre
 
 The code can be deployed **behind a load balancer, allowing us to scale horizontally** by adding more instances of the service to handle increased load. The load balancer distributes incoming requests across multiple instances, enabling linear scalability.
 
-Currently, [ONNX Runtime Architecture]("https://onnxruntime.ai/docs/reference/high-level-design.html") only supports synchronous execution. However, we can still benefit from FastAPI's asynchronous capabilities by running the prediction logic in a separate thread pool using the `run_in_executor` method. This approach allows us to offload CPU-bound tasks to a thread pool while keeping the event loop free to handle other requests.
+Currently, [ONNX Runtime Architecture](https://onnxruntime.ai/docs/reference/high-level-design.html) only supports synchronous execution. However, we can still benefit from FastAPI's asynchronous capabilities by running the prediction logic in a separate thread pool using the `run_in_executor` method. This approach allows us to offload CPU-bound tasks to a thread pool while keeping the event loop free to handle other requests.
 
-ONNX model is only 2.0 mb. If the model object would be very large, then reloading the model in every restart would cause some trouble, such as in automated simple tests. To address this we'd ideally need a "startup-shutdown" logic using [Lifespan Events]("https://fastapi.tiangolo.com/advanced/events/") whereas we load the model before the requests are handled, but only right before the application starts receiving requests, not while the code is being loaded.
+ONNX model is only 2.0 mb. If the model object would be very large, then reloading the model in every restart would cause some trouble, such as in automated simple tests. To address this we'd ideally need a "startup-shutdown" logic using [Lifespan Events](https://fastapi.tiangolo.com/advanced/events/) whereas we load the model before the requests are handled, but only right before the application starts receiving requests, not while the code is being loaded.
 
 The advantage of doing this as an event is that **our service won't start until the model is loaded and so no requests will be prematurely processed and cause errors**.
 
@@ -127,7 +127,7 @@ To install testing requirements: `pip install tests/testing_requirements.txt`
 
 To run a performance test: `locust -f tests/performance_tests/performance_test.py`
 
-Pushed the service running on a single uvicorn worker to above 90% util by ramping to 10000 users at a rate of 10000 per second by another single locust worker. A worker runs on Ubuntu 20.04 on [WSL2]("https://learn.microsoft.com/en-us/windows/wsl/") on a single thread of AMD Ryzen 5950X. Performance report is in `tests/performance_tests/locust_report_*.html`.
+Pushed the service running on a single uvicorn worker to above 90% util by ramping to 10000 users at a rate of 10000 per second by another single locust worker. A worker runs on Ubuntu 20.04 on [WSL2](https://learn.microsoft.com/en-us/windows/wsl/) on a single thread of AMD Ryzen 5950X. Performance report is in `tests/performance_tests/locust_report_*.html`.
 
 Response time measurements can be considered a bit inconsistent as the CPU throttled to 90% util, and throughtput until achieving 90% CPU util. Stress test was on total 800K+ requests, 1000 RPS, and **the median response time was 2600 ms under stress**.
 
@@ -150,8 +150,8 @@ Some of the things I would do if I had more time:
 - **CI/CD**: GitHub Action templates to be triggered by Pull Requests, running .yaml workflows for checking code quality and unit tests.
 - **Kubernetes testing**: a basic gateway and a list of manifests (i.e. `configmap.yaml`, `deployment.yaml`, `service.yaml` `ingress.yaml`) on my local minikube / or development cluster.
 - **Extensive Unit & Performance tests**: The most important test in the suite needs a quick fixing, but left due to time-constraint.  
-- **Code Profiling**: using `pyinstrument` and `FastAPI.middleware` decorator to register a profiling middleware to our service. A good write-up on the topic [here]("https://blog.balthazar-rouberol.com/how-to-profile-a-fastapi-asynchronous-request").
+- **Code Profiling**: using `pyinstrument` and `FastAPI.middleware` decorator to register a profiling middleware to our service. A good write-up on the topic [here](https://blog.balthazar-rouberol.com/how-to-profile-a-fastapi-asynchronous-request).
 - **Metrics API**: assuming only for applications API metrics (i.e. Request Per Minute, Average and Max Latency, Errors per Minute), but these can also be considered 
   - Infrastructure API Metrics: (i.e. uptime, CPU util, memory util)
   - API Product metrics: (i.e. usage growth, unique API consumers, top customers by API usage, API retention, TTFHW, API calls per business transaction) can also be considered.
-  - A good starting point can be [PyTorch Metrics API]("https://pytorch.org/serve/metrics_api.html").
+  - A good starting point can be [PyTorch Metrics API](https://pytorch.org/serve/metrics_api.html).
