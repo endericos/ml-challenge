@@ -66,7 +66,7 @@ Here's the directory structure for the service code:
 
 ```
 
-The `prediction/` endpoint is defined as an asynchronous function `async def prediction(...)` to **handle requests concurrently**. The underlying `classifier.predict_labels` function uses using `asyncio` to efficiently process requests while waiting for I/O operations (such as database queries or external API calls in other cases) to complete, maximizing throughput.
+The `prediction/` endpoint is defined as an asynchronous function `async def prediction(...)` to **handle requests concurrently**. The underlying `classifier.predict_labels` function uses `asyncio` to efficiently process requests while waiting for I/O operations (such as database queries or external API calls in other cases) to complete, maximizing throughput.
 
 The code can be deployed **behind a load balancer, allowing us to scale horizontally** by adding more instances of the service to handle increased load. The load balancer distributes incoming requests across multiple instances, enabling linear scalability.
 
@@ -110,7 +110,7 @@ make example-request
 `example-request` target just holds an example curl commmand
 
 ```bash
-curl -X POST http://localhost:8080/prediction -H "Content-Type: application/json" -d "@./src/example_request.json"`
+curl -X POST http://localhost:8080/prediction -H "Content-Type: application/json" -d "@./src/example_request.json"
 ```
 
 Typically, we'd run `uvicorn --reload` during local development and `gunicorn -k uvicorn.workers.UvicornWorker` during production while we're dealing with meaningful traffic.
@@ -123,13 +123,13 @@ And since the container will be run in K8s behind a TLS Termination Proxy (load 
 
 Added basic performance test report and unit tests. They are basic given the time constraint.
 
-To install testing requirements: `pip install tests/testing_requirements.txt`
+To install testing requirements: `pip install -r tests/testing_requirements.txt`
 
 To run a performance test: `locust -f tests/performance_tests/performance_test.py`
 
 Pushed the service running on a single uvicorn worker to above 90% util by ramping to 10000 users at a rate of 10000 per second by another single locust worker. A worker runs on Ubuntu 20.04 on [WSL2](https://learn.microsoft.com/en-us/windows/wsl/) on a single thread of AMD Ryzen 5950X. Performance report is in `tests/performance_tests/locust_report_*.html`.
 
-Response time measurements can be considered a bit inconsistent as the CPU throttled to 90% util, and throughtput until achieving 90% CPU util. Stress test was on total 800K+ requests, 1000 RPS, and **the median response time was 2600 ms under stress**.
+Response time and throughtput measurements can be considered a bit inconsistent as the CPU util was +90%. Stress test was on total 800K+ requests, ~1000 RPS, and **the median response time was 2600 ms under stress**.
 
 To run unit tests;
 
@@ -144,14 +144,14 @@ Some of the things I would do if I had more time:
 
 - **Model improvement**: A PyTorch NN classifier with text embeddings provided by typically one of embedding models in `SentenceTransformers`. Also, adding a text cleaning functionality to increase quality of training & predictions.
 - **Refactoring**: Proper OOP implementation of the service code. Besides, implementing endpoints as the routers (`APIRouter`).
-- **Docstrings** Type hints used, but still proper code documentation needed, including mini examples.
-- **Proper exception handling**: For the demo, I catched all exceptions with a wide try/except Exception in the endpoint. But the best practice is to explicitly catch the exceptions and deal with them individually, not only in the endpoint, but in all underlying objects.
-- **Packaging the code** as a Python package using provided template.
-- **CI/CD**: GitHub Action templates to be triggered by Pull Requests, running .yaml workflows for checking code quality and unit tests.
-- **Kubernetes testing**: a basic gateway and a list of manifests (i.e. `configmap.yaml`, `deployment.yaml`, `service.yaml` `ingress.yaml`) on my local minikube / or development cluster.
-- **Extensive Unit & Performance tests**: The most important test in the suite needs a quick fixing, but left due to time-constraint.  
-- **Code Profiling**: using `pyinstrument` and `FastAPI.middleware` decorator to register a profiling middleware to our service. A good write-up on the topic [here](https://blog.balthazar-rouberol.com/how-to-profile-a-fastapi-asynchronous-request).
-- **Metrics API**: assuming only for applications API metrics (i.e. Request Per Minute, Average and Max Latency, Errors per Minute), but some of these can also be considered 
+- **Docstrings**: Type hints used, but still proper code documentation needed, including mini examples.
+- **Proper exception handling**: For the demo, I catched all exceptions with a wide try/except Exception in the endpoint. But the best practice is to explicitly catch the exceptions and deal with them individually, not only in the endpoint, but in all underlying objects in other modules.
+- **Packaging:** Packaging the code as a Python package using provided template.
+- **CI/CD**: GitHub Action templates to be triggered by Pull Requests (maybe also remote branches), running .yaml workflows for checking code quality and unit tests.
+- **Kubernetes testing**: A basic gateway and a list of manifests (i.e. `configmap.yaml`, `deployment.yaml`, `service.yaml` `ingress.yaml`) on my local minikube / or development cluster.
+- **Extensive Unit & Performance tests**: Completing the unit test of the endpoint.  
+- **Code Profiling**: Registering a profiling middleware to our service using `pyinstrument` and `FastAPI.middleware` decorator. A good write-up on the topic [here](https://blog.balthazar-rouberol.com/how-to-profile-a-fastapi-asynchronous-request).
+- **Metrics API**: Assuming only for applications API metrics (i.e. Request Per Minute, Average and Max Latency, Errors per Minute), but some of these can also be considered:
   - Infrastructure API Metrics: (i.e. uptime, CPU util, memory util)
-  - API Product metrics: (i.e. usage growth, unique API consumers, top customers by API usage, API retention, TTFHW, API calls per business transaction) can also be considered.
+  - API Product metrics: (i.e. usage growth, unique API consumers, top customers by API usage, API retention, TTFHW, API calls per business transaction)
   - A good starting point: [PyTorch Metrics API](https://pytorch.org/serve/metrics_api.html).
